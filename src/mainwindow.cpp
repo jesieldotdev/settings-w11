@@ -28,6 +28,9 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QProcess>
+#include <QQmlError>
+#include <QQmlContext>
+#include <QQuickWidget>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
@@ -414,6 +417,8 @@ void MainWindow::showRoute(const Route &route, bool push)
         outside.title = findModule(route.kcm).name();
         outside.kcm = route.kcm;
         page = modulePage(outside);
+    } else if (entry && !entry->page.isEmpty()) {
+        page = qmlPage(*entry);
     } else if (entry && !entry->kcm.isEmpty()) {
         page = modulePage(*entry);
     } else {
@@ -665,6 +670,72 @@ QWidget *MainWindow::modulePage(const Entry &entry)
     return page;
 }
 
+namespace
+{
+// O que as páginas QML podem pedir ao app (objeto "settings")
+class Bridge : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Bridge(MainWindow *window, QObject *parent)
+        : QObject(parent)
+        , m_window(window)
+    {
+    }
+
+    Q_INVOKABLE void run(const QString &command)
+    {
+        const QStringList args = QProcess::splitCommand(command);
+        if (!args.isEmpty()) {
+            QProcess::startDetached(QStringLiteral("setsid"), QStringList{QStringLiteral("-f")} + args);
+        }
+    }
+
+    Q_INVOKABLE void openRawModule(const QString &kcm)
+    {
+        // depois que o QML terminar de tratar o clique: a página vai ser trocada
+        QMetaObject::invokeMethod(m_window, [w = m_window, kcm]() { w->openRawModule(kcm); }, Qt::QueuedConnection);
+    }
+
+private:
+    MainWindow *m_window;
+};
+}
+
+QWidget *MainWindow::qmlPage(const Entry &entry)
+{
+    auto *view = new QQuickWidget;
+    view->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    // transparente: a janela é translúcida (desfoque) e a página fica por cima dela
+    view->setAttribute(Qt::WA_AlwaysStackOnTop);
+    view->setAttribute(Qt::WA_TranslucentBackground);
+    view->setClearColor(Qt::transparent);
+    view->rootContext()->setContextProperty(QStringLiteral("settings"), new Bridge(this, view));
+    view->setSource(QUrl(QStringLiteral("qrc:/pages/%1.qml").arg(entry.page)));
+    if (view->status() == QQuickWidget::Error) {
+        for (const QQmlError &error : view->errors()) {
+            qWarning() << error.toString();
+        }
+        // sem a página própria (ex.: falta o plasma-pa): cai no módulo do KDE
+        if (!entry.kcm.isEmpty()) {
+            delete view;
+            return modulePage(entry);
+        }
+    }
+    return view;
+}
+
+void MainWindow::openRawModule(const QString &kcm)
+{
+    if (!leaveModule()) {
+        return;
+    }
+    Route r;
+    r.section = m_current.section;
+    r.kcm = kcm;
+    showRoute(r);
+}
+
 bool MainWindow::openModule(const QString &kcm)
 {
     std::function<bool(const QList<Entry> &, Route)> find = [&](const QList<Entry> &entries, Route base) {
@@ -697,3 +768,5 @@ bool MainWindow::openModule(const QString &kcm)
     }
     return false;
 }
+
+#include "mainwindow.moc"

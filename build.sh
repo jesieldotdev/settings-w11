@@ -20,12 +20,12 @@ as_root() {
 if [ "${1:-}" != "--skip-deps" ]; then
     info "Dependências de compilação"
     if command -v dnf >/dev/null; then
-        as_root dnf -y -q install gcc-c++ cmake extra-cmake-modules qt6-qtbase-devel \
+        as_root dnf -y -q install gcc-c++ cmake extra-cmake-modules qt6-qtbase-devel qt6-qtdeclarative-devel \
             kf6-kcmutils-devel kf6-kcoreaddons-devel kf6-kconfig-devel kf6-kdbusaddons-devel
     elif command -v pacman >/dev/null; then
-        as_root pacman -S --needed --noconfirm base-devel cmake extra-cmake-modules qt6-base kcmutils kcoreaddons kconfig kdbusaddons
+        as_root pacman -S --needed --noconfirm base-devel cmake extra-cmake-modules qt6-base qt6-declarative kcmutils kcoreaddons kconfig kdbusaddons
     elif command -v apt-get >/dev/null; then
-        as_root apt-get install -y g++ cmake extra-cmake-modules qt6-base-dev libkf6kcmutils-dev \
+        as_root apt-get install -y g++ cmake extra-cmake-modules qt6-base-dev qt6-declarative-dev libkf6kcmutils-dev \
             libkf6coreaddons-dev libkf6config-dev libkf6dbusaddons-dev
     fi
 fi

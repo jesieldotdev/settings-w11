@@ -30,6 +30,9 @@ public:
     /** Abre direto um módulo pelo id (ex.: kcm_pulseaudio), como o systemsettings faz. */
     bool openModule(const QString &kcm);
 
+    /** Abre o módulo do KDE de verdade, mesmo quando há página própria para ele. */
+    void openRawModule(const QString &kcm);
+
 private:
     // Onde se está: seção + caminho de cartões dentro dela (grupos/módulo)
     struct Route {
@@ -49,6 +52,7 @@ private:
     QWidget *systemHeader();
     QWidget *searchPage(const QString &text);
     QWidget *modulePage(const Entry &entry);
+    QWidget *qmlPage(const Entry &entry);
     QWidget *cardList(const QList<QPair<Entry, Route>> &cards);
     void activate(const Entry &entry, const Route &route);
     bool leaveModule(); // pergunta sobre alterações não aplicadas

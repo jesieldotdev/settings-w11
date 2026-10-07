@@ -20,6 +20,7 @@ struct Entry {
     QString command;        // ou um programa à parte
     QList<Entry> children;  // ou um grupo de cartões
     QString keywords;       // palavras a mais para a pesquisa
+    QString page;           // página própria no estilo do Windows (pages/<page>.qml)
 };
 
 struct Section {
@@ -38,7 +39,7 @@ inline QList<Section> catalog()
                   {QStringLiteral("Luz noturna"), QStringLiteral("Cores mais quentes à noite"), QStringLiteral("redshift-status-on"), QStringLiteral("kcm_nightlight")},
                   {QStringLiteral("Calibração de cor"), QStringLiteral("Perfis de cor dos monitores"), QStringLiteral("preferences-desktop-display-color"), QStringLiteral("kcm_colord")},
               }, QStringLiteral("tela resolução escala brilho")},
-             {QStringLiteral("Som"), QStringLiteral("Níveis de volume, saída, entrada, dispositivos de som"), QStringLiteral("audio-volume-high"), QStringLiteral("kcm_pulseaudio"), {}, {}, QStringLiteral("áudio alto-falante microfone")},
+             {QStringLiteral("Som"), QStringLiteral("Níveis de volume, saída, entrada, dispositivos de som"), QStringLiteral("audio-volume-high"), QStringLiteral("kcm_pulseaudio"), {}, {}, QStringLiteral("áudio alto-falante microfone"), QStringLiteral("Som")},
              {QStringLiteral("Notificações"), QStringLiteral("Alertas de aplicativos e do sistema, não incomodar"), QStringLiteral("preferences-desktop-notification-bell"), QStringLiteral("kcm_notifications"), {}, {}, QStringLiteral("assistente de foco")},
              {QStringLiteral("Ligar/Desligar"), QStringLiteral("Repouso, uso da bateria, economia de energia"), QStringLiteral("preferences-system-power-management"), QStringLiteral("kcm_powerdevilprofilesconfig"), {}, {}, QStringLiteral("bateria energia suspender")},
              {QStringLiteral("Multitarefas"), QStringLiteral("Alternância de janelas, áreas de trabalho, bordas da tela"), QStringLiteral("preferences-system-windows"), {}, {}, {

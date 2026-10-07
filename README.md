@@ -12,6 +12,12 @@ Ao abrir um cartão, o módulo do KDE correspondente aparece dentro do app, com 
 Windows ("Sistema › Som") e os botões Padrões / Redefinir / Aplicar quando o módulo usa.
 Módulos que não existem no sistema não aparecem.
 
+Algumas páginas são refeitas do zero com o visual do Windows (em `pages/`, QML):
+
+- **Som** — "Escolher onde reproduzir o som" e o dispositivo de entrada em cartões que
+  expandem, volume, mixer por aplicativo e "Mais configurações de som" (o módulo do KDE
+  completo, com perfis e portas). Usa o plasma-pa.
+
 ## Instalar
 
 ```sh
