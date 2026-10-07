@@ -811,7 +811,7 @@ bool MainWindow::openModule(const QString &kcm)
         for (int i = 0; i < entries.size(); ++i) {
             Route r = base;
             r.path.append(i);
-            if (entries[i].kcm == kcm) {
+            if (entries[i].kcm == kcm || (!entries[i].page.isEmpty() && entries[i].page.compare(kcm, Qt::CaseInsensitive) == 0)) {
                 showRoute(r, false);
                 return true;
             }

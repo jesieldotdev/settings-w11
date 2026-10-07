@@ -17,6 +17,10 @@ Algumas páginas são refeitas do zero com o visual do Windows (em `pages/`, QML
 - **Som** — "Escolher onde reproduzir o som" e o dispositivo de entrada em cartões que
   expandem, volume, mixer por aplicativo e "Mais configurações de som" (o módulo do KDE
   completo, com perfis e portas). Usa o plasma-pa.
+- **Aplicativos instalados** — todos os apps do menu com versão, publicador, data e
+  tamanho; pesquisa, ordenação e filtro por origem. O "⋯" desinstala direto, sem loja:
+  pacotes do sistema (o dnf simula antes e mostra o que sai junto; o que derrubaria a
+  sessão é bloqueado), Flatpak, Snap, e AppImages/atalhos soltos vão para a lixeira.
 
 ## Instalar
 

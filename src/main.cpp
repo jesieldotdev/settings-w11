@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "appsmodel.h"
 #include "mainwindow.h"
 
 #include <KAboutData>
@@ -14,6 +15,7 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QQmlEngine>
 
 int main(int argc, char **argv)
 {
@@ -29,6 +31,9 @@ int main(int argc, char **argv)
     about.setupCommandLine(&parser);
     parser.process(app);
     about.processCommandLine(&parser);
+
+    // tipos das páginas próprias em QML
+    qmlRegisterType<AppsModel>("SettingsW11", 1, 0, "AppsModel");
 
     MainWindow window;
     const QStringList args = parser.positionalArguments();

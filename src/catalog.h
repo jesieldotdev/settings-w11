@@ -97,7 +97,7 @@ inline QList<Section> catalog()
          }},
         {QStringLiteral("Aplicativos"), QStringLiteral("preferences-desktop-default-applications"),
          {
-             {QStringLiteral("Aplicativos instalados"), QStringLiteral("Instalar, remover e atualizar"), QStringLiteral("plasmadiscover"), {}, QStringLiteral("plasma-discover --mode installed"), {}, QStringLiteral("desinstalar programas")},
+             {QStringLiteral("Aplicativos instalados"), QStringLiteral("Desinstalar aplicativos do sistema, Flatpak, Snap e AppImage"), QStringLiteral("plasmadiscover"), {}, {}, {}, QStringLiteral("desinstalar remover programas flatpak snap appimage"), QStringLiteral("Apps")},
              {QStringLiteral("Aplicativos padrão"), QStringLiteral("Navegador, e-mail, tipos de arquivo"), QStringLiteral("preferences-desktop-default-applications"), {}, {}, {
                   {QStringLiteral("Aplicativos padrão"), QStringLiteral("Navegador, e-mail, terminal..."), QStringLiteral("preferences-desktop-default-applications"), QStringLiteral("kcm_componentchooser")},
                   {QStringLiteral("Tipos de arquivo"), QStringLiteral("Com qual aplicativo abrir cada arquivo"), QStringLiteral("preferences-desktop-filetype-association"), QStringLiteral("kcm_filetypes")},
