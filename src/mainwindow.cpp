@@ -30,12 +30,15 @@
 #include <QProcess>
 #include <QQmlError>
 #include <QQmlContext>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <QQuickWidget>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
 #include <QStyledItemDelegate>
 #include <QSysInfo>
+#include <QTimer>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -618,6 +621,8 @@ QWidget *MainWindow::searchPage(const QString &text)
     return cardList(cards);
 }
 
+static void makeTransparent(QQuickWidget *view);
+
 QWidget *MainWindow::modulePage(const Entry &entry)
 {
     auto *page = new QWidget;
@@ -636,6 +641,10 @@ QWidget *MainWindow::modulePage(const Entry &entry)
     }
     m_module = module;
     module->load();
+    // os módulos em QML pintam um painel opaco: tira, para aparecer a janela translúcida
+    for (QQuickWidget *view : module->widget()->findChildren<QQuickWidget *>()) {
+        makeTransparent(view);
+    }
     col->addWidget(module->widget(), 1);
 
     // rodapé com Aplicar / Redefinir / Padrões quando o módulo usa
@@ -702,16 +711,64 @@ private:
 };
 }
 
+// Página QML por cima da janela translúcida, sem fundo próprio
+static void stripBackgrounds(QQuickItem *item, const QColor &window)
+{
+    if (!item) {
+        return;
+    }
+    // ApplicationItem (raiz dos módulos) e páginas do Kirigami têm fundo opaco
+    if (item->metaObject()->indexOfProperty("color") >= 0 && item->metaObject()->indexOfProperty("pageStack") >= 0) {
+        item->setProperty("color", QColor(Qt::transparent));
+    }
+    if (QString::fromLatin1(item->metaObject()->className()).contains(QLatin1String("Page"))
+        && item->metaObject()->indexOfProperty("background") >= 0) {
+        item->setProperty("background", QVariant::fromValue<QQuickItem *>(nullptr));
+    }
+    // faixas de fundo grandes na cor da janela (barra de título da página)
+    if (QString::fromLatin1(item->metaObject()->className()) == QLatin1String("QQuickRectangle") && item->width() > 200 && item->height() > 30) {
+        const QColor c = item->property("color").value<QColor>();
+        if (c.alpha() == 255 && qAbs(c.lightness() - window.lightness()) < 24) {
+            item->setProperty("color", QColor(Qt::transparent));
+        }
+    }
+    for (QQuickItem *child : item->childItems()) {
+        stripBackgrounds(child, window);
+    }
+}
+
+static void makeTransparent(QQuickWidget *view)
+{
+    view->setAttribute(Qt::WA_AlwaysStackOnTop);
+    view->setAttribute(Qt::WA_TranslucentBackground);
+    view->setClearColor(Qt::transparent);
+    // o conteúdo dos módulos chega aos poucos: limpa de novo quando a cena muda
+    const QColor window = view->palette().color(QPalette::Window);
+    auto strip = [view, window]() {
+        stripBackgrounds(view->rootObject(), window);
+    };
+    strip();
+    if (QQuickWindow *w = view->quickWindow()) {
+        auto *timer = new QTimer(view);
+        timer->setSingleShot(true);
+        timer->setInterval(50);
+        QObject::connect(timer, &QTimer::timeout, view, strip);
+        QObject::connect(w, &QQuickWindow::sceneGraphInitialized, timer, qOverload<>(&QTimer::start));
+        QObject::connect(w, &QQuickWindow::afterAnimating, timer, [timer]() {
+            if (!timer->isActive()) {
+                timer->start();
+            }
+        });
+    }
+}
+
 QWidget *MainWindow::qmlPage(const Entry &entry)
 {
     auto *view = new QQuickWidget;
     view->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    // transparente: a janela é translúcida (desfoque) e a página fica por cima dela
-    view->setAttribute(Qt::WA_AlwaysStackOnTop);
-    view->setAttribute(Qt::WA_TranslucentBackground);
-    view->setClearColor(Qt::transparent);
     view->rootContext()->setContextProperty(QStringLiteral("settings"), new Bridge(this, view));
     view->setSource(QUrl(QStringLiteral("qrc:/pages/%1.qml").arg(entry.page)));
+    makeTransparent(view);
     if (view->status() == QQuickWidget::Error) {
         for (const QQmlError &error : view->errors()) {
             qWarning() << error.toString();
