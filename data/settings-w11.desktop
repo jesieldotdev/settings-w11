@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Configurações
+GenericName=Configurações do sistema
+Comment=Configurações do KDE Plasma organizadas como as do Windows 11
+Exec=settings-w11 %U
+Icon=preferences-system
+Categories=Qt;KDE;Settings;
+Keywords=configurações;sistema;painel de controle;settings;
+StartupWMClass=settings-w11

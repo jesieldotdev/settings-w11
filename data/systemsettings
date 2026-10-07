@@ -1,0 +1,12 @@
+#!/bin/sh
+# settings-w11: quem chama "systemsettings" (menu, bandeja, "Configurar…" dos apps)
+# abre as Configurações do Windows 11. Sem o settings-w11, cai no original.
+# O módulo pedido é o argumento kcm_… (ex.: kcm_pulseaudio).
+SETTINGS="$HOME/.local/bin/settings-w11"
+[ -x "$SETTINGS" ] || exec /usr/bin/systemsettings "$@"
+for arg in "$@"; do
+    case "$arg" in
+        kcm*|*/kcm*) exec "$SETTINGS" "${arg%.desktop}" ;;   # o módulo pedido (o resto são opções)
+    esac
+done
+exec "$SETTINGS"
