@@ -252,6 +252,17 @@ MainWindow::MainWindow(QWidget *parent)
     titleFont.setWeight(QFont::DemiBold);
     m_title->setFont(titleFont);
     m_title->setTextFormat(Qt::RichText);
+    m_title->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
+    // clicar num nível anterior da trilha volta para ele
+    connect(m_title, &QLabel::linkActivated, this, [this](const QString &link) {
+        if (!leaveModule()) {
+            return;
+        }
+        Route r;
+        r.section = m_current.section;
+        r.path = m_current.path.mid(0, link.toInt());
+        showRoute(r);
+    });
     rightLayout->addWidget(m_title);
     m_page = new QWidget(right);
     m_pageLayout = new QVBoxLayout(m_page);
@@ -374,21 +385,23 @@ QString MainWindow::breadcrumb(const Route &route) const
     if (!route.search.isEmpty()) {
         return QStringLiteral("Resultados da pesquisa");
     }
-    if (!route.kcm.isEmpty()) {
-        return findModule(route.kcm).name().toHtmlEscaped();
-    }
     QStringList parts{m_catalog.at(route.section).title};
     const QList<Entry> *list = &m_catalog.at(route.section).entries;
     for (int i : route.path) {
         parts << list->at(i).title;
         list = &list->at(i).children;
     }
-    // como no Windows: os níveis anteriores apagados, o atual em destaque
+    if (!route.kcm.isEmpty()) {
+        parts << findModule(route.kcm).name();
+    }
+    // como no Windows: os níveis anteriores apagados e clicáveis, o atual em destaque
     const QString dim = palette().color(QPalette::PlaceholderText).name();
     QString html;
     for (int i = 0; i < parts.size(); ++i) {
         const bool last = i == parts.size() - 1;
-        html += last ? parts[i].toHtmlEscaped() : QStringLiteral("<span style='color:%1'>%2&nbsp;&nbsp;›&nbsp;&nbsp;</span>").arg(dim, parts[i].toHtmlEscaped());
+        html += last ? parts[i].toHtmlEscaped()
+                     : QStringLiteral("<a href='%1' style='color:%2; text-decoration:none'>%3</a><span style='color:%2'>&nbsp;&nbsp;›&nbsp;&nbsp;</span>")
+                           .arg(QString::number(i), dim, parts[i].toHtmlEscaped());
     }
     return html;
 }
@@ -787,8 +800,7 @@ void MainWindow::openRawModule(const QString &kcm)
     if (!leaveModule()) {
         return;
     }
-    Route r;
-    r.section = m_current.section;
+    Route r = m_current; // a trilha continua: Sistema › Som › Áudio
     r.kcm = kcm;
     showRoute(r);
 }
