@@ -15,6 +15,10 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QEasingCurve>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+#include <QVariantAnimation>
 #include <QFile>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -74,11 +78,28 @@ public:
         setCursor(Qt::PointingHandCursor);
         setMinimumHeight(m_entry.subtitle.isEmpty() ? 48 : 68);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        m_hoverAnim.setDuration(120);
+        connect(&m_hoverAnim, &QVariantAnimation::valueChanged, this, [this](const QVariant &v) {
+            m_hover = v.toReal();
+            update();
+        });
     }
 
     QSize sizeHint() const override
     {
         return QSize(600, minimumHeight());
+    }
+
+    bool event(QEvent *e) override
+    {
+        // o fundo clareia aos poucos ao passar o mouse, como no Windows
+        if (e->type() == QEvent::HoverEnter || e->type() == QEvent::HoverLeave) {
+            m_hoverAnim.stop();
+            m_hoverAnim.setStartValue(m_hover);
+            m_hoverAnim.setEndValue(e->type() == QEvent::HoverEnter ? 1.0 : 0.0);
+            m_hoverAnim.start();
+        }
+        return QWidget::event(e);
     }
 
 protected:
@@ -88,7 +109,7 @@ protected:
         p.setRenderHint(QPainter::Antialiasing);
         const QColor text = palette().color(QPalette::WindowText);
         p.setPen(QPen(alpha(text, 0.06), 1));
-        p.setBrush(alpha(text, m_pressed ? 0.035 : (underMouse() ? 0.075 : 0.05)));
+        p.setBrush(alpha(text, m_pressed ? 0.035 : 0.05 + 0.025 * m_hover));
         p.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), 5, 5);
 
         QIcon::fromTheme(m_entry.icon, QIcon::fromTheme(QStringLiteral("preferences-system"))).paint(&p, QRect(20, (height() - 20) / 2, 20, 20));
@@ -140,6 +161,8 @@ protected:
 private:
     Entry m_entry;
     bool m_pressed = false;
+    qreal m_hover = 0;
+    QVariantAnimation m_hoverAnim;
 };
 
 // Barra lateral: item selecionado com fundo arredondado e o tracinho azul à esquerda
@@ -166,10 +189,6 @@ public:
             p->setBrush(alpha(text, selected ? 0.09 : 0.05));
             p->drawRoundedRect(r, 5, 5);
         }
-        if (selected) {
-            p->setBrush(option.palette.color(QPalette::Highlight));
-            p->drawRoundedRect(QRectF(r.left(), r.center().y() - 8, 3, 16), 1.5, 1.5);
-        }
         const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
         icon.paint(p, QRect(int(r.left()) + 14, int(r.center().y()) - 9, 18, 18));
         p->setPen(text);
@@ -177,6 +196,146 @@ public:
         p->restore();
     }
 };
+
+// A barrinha azul da barra lateral: desliza até o item novo, esticando na
+// frente e encolhendo atrás, como no Windows 11
+class SidebarPill : public QWidget
+{
+public:
+    explicit SidebarPill(QListWidget *list)
+        : QWidget(list->viewport())
+        , m_list(list)
+    {
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        list->viewport()->installEventFilter(this);
+        resize(list->viewport()->size());
+        m_anim.setDuration(380);
+        m_anim.setStartValue(0.0);
+        m_anim.setEndValue(1.0);
+        connect(&m_anim, &QVariantAnimation::valueChanged, this, qOverload<>(&QWidget::update));
+        connect(list, &QListWidget::currentRowChanged, this, [this](int row) {
+            moveTo(row);
+        });
+    }
+
+    void moveTo(int row)
+    {
+        const QRectF target = pillRect(row);
+        if (m_to.isNull() || !isVisible()) {
+            m_from = m_to = target;
+            update();
+            return;
+        }
+        m_from = current();
+        m_to = target;
+        m_anim.stop();
+        m_anim.start();
+    }
+
+protected:
+    bool eventFilter(QObject *, QEvent *e) override
+    {
+        if (e->type() == QEvent::Resize) {
+            resize(m_list->viewport()->size());
+            m_from = m_to = pillRect(m_list->currentRow());
+        }
+        return false;
+    }
+
+    void paintEvent(QPaintEvent *) override
+    {
+        if (m_to.isNull()) {
+            return;
+        }
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(Qt::NoPen);
+        p.setBrush(palette().color(QPalette::Highlight));
+        p.drawRoundedRect(current(), 1.5, 1.5);
+    }
+
+private:
+    QRectF pillRect(int row) const
+    {
+        QListWidgetItem *item = m_list->item(row);
+        if (!item) {
+            return {};
+        }
+        const QRectF r = QRectF(m_list->visualItemRect(item)).adjusted(4, 2, -4, -2);
+        return QRectF(r.left(), r.center().y() - 8, 3, 16);
+    }
+
+    QRectF current() const
+    {
+        if (m_anim.state() != QAbstractAnimation::Running) {
+            return m_to;
+        }
+        const qreal t = m_anim.currentValue().toReal();
+        const QEasingCurve ease(QEasingCurve::OutCubic);
+        const qreal lead = ease.valueForProgress(qMin(1.0, t * 1.5));          // a ponta da frente vai antes
+        const qreal trail = ease.valueForProgress(qMax(0.0, (t - 0.25) / 0.75)); // a de trás vem depois
+        const bool down = m_to.top() > m_from.top();
+        const qreal top = down ? m_from.top() + (m_to.top() - m_from.top()) * trail : m_from.top() + (m_to.top() - m_from.top()) * lead;
+        const qreal bottom = down ? m_from.bottom() + (m_to.bottom() - m_from.bottom()) * lead : m_from.bottom() + (m_to.bottom() - m_from.bottom()) * trail;
+        return QRectF(m_to.left(), top, m_to.width(), bottom - top);
+    }
+
+    QListWidget *m_list;
+    QRectF m_from;
+    QRectF m_to;
+    QVariantAnimation m_anim;
+};
+
+// Entrada da página nova, como no Windows: sobe um pouco enquanto aparece.
+// Páginas em QML animam por dentro (mais leve que um efeito no widget).
+void animateIn(QWidget *page, QVBoxLayout *layout)
+{
+    constexpr int distance = 28;
+    constexpr int duration = 300;
+    QList<QQuickWidget *> views = page->findChildren<QQuickWidget *>();
+    if (auto *view = qobject_cast<QQuickWidget *>(page)) {
+        views << view;
+    }
+    if (!views.isEmpty()) {
+        for (QQuickWidget *view : std::as_const(views)) {
+            QQuickItem *root = view->rootObject();
+            if (!root) {
+                continue;
+            }
+            auto *slide = new QPropertyAnimation(root, "y", root);
+            slide->setDuration(duration);
+            slide->setStartValue(root->y() + distance);
+            slide->setEndValue(root->y());
+            slide->setEasingCurve(QEasingCurve::OutCubic);
+            auto *fade = new QPropertyAnimation(root, "opacity", root);
+            fade->setDuration(duration * 2 / 3);
+            fade->setStartValue(0.0);
+            fade->setEndValue(1.0);
+            root->setOpacity(0);
+            slide->start(QAbstractAnimation::DeleteWhenStopped);
+            fade->start(QAbstractAnimation::DeleteWhenStopped);
+        }
+        return;
+    }
+    auto *effect = new QGraphicsOpacityEffect(page);
+    effect->setOpacity(0);
+    page->setGraphicsEffect(effect);
+    auto *anim = new QVariantAnimation(page);
+    anim->setDuration(duration);
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+    QObject::connect(anim, &QVariantAnimation::valueChanged, page, [effect, layout](const QVariant &v) {
+        const qreal t = v.toReal();
+        effect->setOpacity(qMin(1.0, t * 1.5));
+        layout->setContentsMargins(0, int(distance * (1 - t)), 0, 0);
+    });
+    QObject::connect(anim, &QVariantAnimation::finished, page, [page, layout]() {
+        layout->setContentsMargins(0, 0, 0, 0);
+        page->setGraphicsEffect(nullptr); // sem efeito parado por cima (deixa o desenho mais leve)
+    });
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
+}
 
 KPluginMetaData findModule(const QString &id)
 {
@@ -345,6 +504,7 @@ QWidget *MainWindow::buildSidebar()
     m_sections = new QListWidget(side);
     m_sections->setFrameShape(QFrame::NoFrame);
     m_sections->setItemDelegate(new SidebarDelegate(m_sections));
+    new SidebarPill(m_sections);
     m_sections->setMouseTracking(true);
     m_sections->viewport()->setAttribute(Qt::WA_Hover);
     QPalette pal = m_sections->palette();
@@ -441,6 +601,7 @@ void MainWindow::showRoute(const Route &route, bool push)
         page = sectionPage(route);
     }
     m_pageLayout->addWidget(page);
+    animateIn(page, m_pageLayout);
 }
 
 void MainWindow::goBack()

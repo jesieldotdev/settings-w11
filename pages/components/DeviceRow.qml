@@ -19,6 +19,7 @@ Item {
         anchors.fill: parent
         anchors.topMargin: 1
         color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, mouse.containsMouse ? 0.04 : 0)
+        Behavior on color { ColorAnimation { duration: 120 } }
     }
 
     // bolinha: cheia na cor de destaque quando é o dispositivo em uso

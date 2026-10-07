@@ -8,6 +8,7 @@ Rectangle {
     radius: 5
     color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b,
                    pressed ? 0.035 : (hovered ? 0.075 : 0.05))
+    Behavior on color { ColorAnimation { duration: 120 } }
     border.width: 1
     border.color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.06)
 }
