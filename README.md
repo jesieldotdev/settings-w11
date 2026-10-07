@@ -17,6 +17,8 @@ Algumas páginas são refeitas do zero com o visual do Windows (em `pages/`, QML
 - **Som** — "Escolher onde reproduzir o som" e o dispositivo de entrada em cartões que
   expandem, volume, mixer por aplicativo e "Mais configurações de som" (o módulo do KDE
   completo, com perfis e portas). Usa o plasma-pa.
+- **Cores** — cor de destaque Manual ou Automática (tirada do papel de parede), as 48
+  cores do Windows e cores personalizadas.
 - **Aplicativos instalados** — todos os apps do menu com versão, publicador, data e
   tamanho; pesquisa, ordenação e filtro por origem. O "⋯" desinstala direto, sem loja:
   pacotes do sistema (o dnf simula antes e mostra o que sai junto; o que derrubaria a

@@ -76,7 +76,7 @@ inline QList<Section> catalog()
         {QStringLiteral("Personalização"), QStringLiteral("preferences-desktop-color"),
          {
              {QStringLiteral("Plano de fundo"), QStringLiteral("Imagem, cor sólida, apresentação de slides"), QStringLiteral("preferences-desktop-wallpaper"), QStringLiteral("kcm_wallpaper"), {}, {}, QStringLiteral("papel de parede")},
-             {QStringLiteral("Cores"), QStringLiteral("Cor de ênfase, modo claro e escuro"), QStringLiteral("preferences-desktop-color"), QStringLiteral("kcm_colors"), {}, {}, QStringLiteral("tema escuro claro destaque")},
+             {QStringLiteral("Cores"), QStringLiteral("Cor de ênfase, modo claro e escuro"), QStringLiteral("preferences-desktop-color"), QStringLiteral("kcm_colors"), {}, {}, QStringLiteral("tema escuro claro destaque ênfase papel de parede"), QStringLiteral("Cores")},
              {QStringLiteral("Temas"), QStringLiteral("Tema global, ícones, cursores, estilo"), QStringLiteral("preferences-desktop-theme-global"), {}, {}, {
                   {QStringLiteral("Tema global"), QStringLiteral("Aparência completa do sistema"), QStringLiteral("preferences-desktop-theme-global"), QStringLiteral("kcm_lookandfeel")},
                   {QStringLiteral("Estilo do Plasma"), QStringLiteral("Painéis e widgets"), QStringLiteral("preferences-desktop-plasma-theme"), QStringLiteral("kcm_desktoptheme")},

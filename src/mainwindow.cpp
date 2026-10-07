@@ -874,6 +874,22 @@ public:
         }
     }
 
+    /** Lê uma chave de um arquivo de configuração do KDE (ex.: kdeglobals). */
+    Q_INVOKABLE QString readConfig(const QString &file, const QString &group, const QString &key)
+    {
+        KConfig config(file);
+        config.reparseConfiguration();
+        return config.group(group).readEntry(key, QString());
+    }
+
+    /** Grava e avisa quem escuta (como o kwriteconfig6 --notify). */
+    Q_INVOKABLE void writeConfig(const QString &file, const QString &group, const QString &key, const QString &value)
+    {
+        KConfig config(file);
+        config.group(group).writeEntry(key, value, KConfig::Notify);
+        config.sync();
+    }
+
     Q_INVOKABLE void openRawModule(const QString &kcm)
     {
         // depois que o QML terminar de tratar o clique: a página vai ser trocada
