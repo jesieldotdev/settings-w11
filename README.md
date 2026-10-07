@@ -2,6 +2,13 @@
 
 As **Configurações do KDE Plasma 6** organizadas como as do **Windows 11**.
 
+<p>
+  <img src="docs/som.png" width="49%" alt="Sistema › Som">
+  <img src="docs/aplicativos.png" width="49%" alt="Aplicativos instalados">
+  <img src="docs/cores.png" width="49%" alt="Personalização › Cores">
+  <img src="docs/bluetooth.png" width="49%" alt="Módulo do Bluetooth do KDE dentro do app">
+</p>
+
 Barra lateral com a sua conta, "Localizar uma configuração" e as seções do Windows
 (Sistema, Bluetooth e dispositivos, Rede & Internet, Personalização, Aplicativos, Contas,
 Hora e idioma, Jogos, Acessibilidade, Privacidade e segurança, Atualizações). Cada seção
