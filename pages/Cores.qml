@@ -29,9 +29,11 @@ Page {
     ]
 
     property bool automatic: false
+    property bool transparency: false
     property color accent: "#0078D7"
 
     function load() {
+        transparency = settings.readConfig("plasma-w11rc", "Aparencia", "Transparencia") !== "false";
         automatic = settings.readConfig("kdeglobals", "General", "accentColorFromWallpaper") === "true";
         const rgb = settings.readConfig("kdeglobals", "General", "AccentColor").split(",");
         if (rgb.length === 3) {
@@ -57,13 +59,57 @@ Page {
         reloadLater.restart();
     }
 
+    function setTransparency(on) {
+        settings.writeConfig("plasma-w11rc", "Aparencia", "Transparencia", on ? "true" : "false");
+        // refaz o tema das janelas (Kvantum); os apps pegam ao serem abertos de novo
+        settings.run("sh -c \"$HOME/.local/bin/acompanhar-destaque --agora\"");
+        transparency = on;
+    }
+
     Component.onCompleted: load()
     Timer { id: reloadLater; interval: 2500; onTriggered: page.load() }
+
+    // ── efeitos de transparência ───────────────────────────────────────
+    Card {
+        Layout.fillWidth: true
+        Layout.topMargin: 4
+        implicitHeight: 68
+        Kirigami.Icon {
+            x: 20
+            anchors.verticalCenter: parent.verticalCenter
+            width: 20
+            height: 20
+            source: "preferences-desktop-effects"
+        }
+        ColumnLayout {
+            x: 56
+            width: parent.width - x - transparencySwitch.width - 40
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+            QQC2.Label { text: "Efeitos de transparência"; Layout.fillWidth: true }
+            QQC2.Label {
+                text: "Janelas translúcidas, com o papel de parede desfocado atrás (vale para os apps abertos depois)"
+                opacity: 0.65
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
+        }
+        QQC2.Switch {
+            id: transparencySwitch
+            anchors.right: parent.right
+            anchors.rightMargin: 16
+            anchors.verticalCenter: parent.verticalCenter
+            text: checked ? "Ativado" : "Desativado"
+            LayoutMirroring.enabled: true // o texto à esquerda da chave, como no Windows
+            checked: page.transparency
+            onToggled: page.setTransparency(checked)
+        }
+    }
 
     // ── cor de destaque ────────────────────────────────────────────────
     Card {
         Layout.fillWidth: true
-        Layout.topMargin: 4
         implicitHeight: header.height + body.implicitHeight
 
         Item {
