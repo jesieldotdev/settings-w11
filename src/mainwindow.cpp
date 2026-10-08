@@ -165,6 +165,36 @@ private:
     QVariantAnimation m_hoverAnim;
 };
 
+// Camada do Windows 11 por baixo do conteúdo dos módulos: um pouco mais clara que o
+// fundo da janela, cantos arredondados e borda fina, separando o módulo do resto
+class Layer : public QWidget
+{
+public:
+    explicit Layer(QWidget *parent = nullptr)
+        : QWidget(parent)
+    {
+        auto *box = new QVBoxLayout(this);
+        box->setContentsMargins(6, 6, 6, 6);
+        box->setSpacing(0);
+    }
+
+    void setContent(QWidget *content)
+    {
+        static_cast<QVBoxLayout *>(layout())->addWidget(content, 1);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        const QColor text = palette().color(QPalette::WindowText);
+        p.setPen(QPen(alpha(text, 0.07), 1));
+        p.setBrush(alpha(text, 0.035));
+        p.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), 8, 8);
+    }
+};
+
 // Barra lateral: item selecionado com fundo arredondado e o tracinho azul à esquerda
 class SidebarDelegate : public QStyledItemDelegate
 {
@@ -819,7 +849,9 @@ QWidget *MainWindow::modulePage(const Entry &entry)
     for (QQuickWidget *view : module->widget()->findChildren<QQuickWidget *>()) {
         makeTransparent(view);
     }
-    col->addWidget(module->widget(), 1);
+    auto *layer = new Layer(page);
+    layer->setContent(module->widget());
+    col->addWidget(layer, 1);
 
     // rodapé com Aplicar / Redefinir / Padrões quando o módulo usa
     const auto buttons = module->buttons();
