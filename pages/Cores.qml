@@ -46,8 +46,14 @@ Page {
         return ("#" + h(c.r) + h(c.g) + h(c.b)).toUpperCase();
     }
     function setManual(color) {
+        const h = hex(color);
+        const rgb = [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)).join(",");
         settings.writeConfig("kdeglobals", "General", "accentColorFromWallpaper", "false");
-        settings.run("plasma-apply-colorscheme --accent-color " + hex(color));
+        // o plasma-apply-colorscheme só recalcula as cores do esquema; a cor escolhida
+        // (de onde o painel e os apps tiram o destaque) é gravada aqui, como faz o módulo do KDE
+        settings.writeConfig("kdeglobals", "General", "AccentColor", rgb);
+        settings.writeConfig("kdeglobals", "General", "LastUsedCustomAccentColor", rgb);
+        settings.run("plasma-apply-colorscheme --accent-color " + h);
         accent = color;
         automatic = false;
         reloadLater.restart();
