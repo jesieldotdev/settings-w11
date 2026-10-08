@@ -41,6 +41,7 @@ Page {
         }
     }
     function hex(c) {
+        if (typeof c === "string") return c.toUpperCase(); // os quadradinhos já vêm como "#RRGGBB"
         const h = v => ("0" + Math.round(v * 255).toString(16)).slice(-2);
         return ("#" + h(c.r) + h(c.g) + h(c.b)).toUpperCase();
     }
@@ -95,15 +96,21 @@ Page {
                 Layout.fillWidth: true
             }
         }
-        QQC2.Switch {
+        // "Ativado" à esquerda da chave, como no Windows
+        RowLayout {
             id: transparencySwitch
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: checked ? "Ativado" : "Desativado"
-            LayoutMirroring.enabled: true // o texto à esquerda da chave, como no Windows
-            checked: page.transparency
-            onToggled: page.setTransparency(checked)
+            spacing: 12
+            QQC2.Label {
+                text: transparencyToggle.checked ? "Ativado" : "Desativado"
+            }
+            QQC2.Switch {
+                id: transparencyToggle
+                checked: page.transparency
+                onToggled: page.setTransparency(checked)
+            }
         }
     }
 
